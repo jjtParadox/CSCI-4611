@@ -2,6 +2,7 @@
 #define GFX_TEST_H_
 
 #include <mingfx.h>
+using namespace mingfx;
 
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@ public:
     void UpdateSimulation(double dt);
     
     void InitOpenGL();
+    void InitNanoGUI();
     
     void DrawUsingOpenGL();
       

@@ -4,6 +4,14 @@
 #include <sstream>
 
 GfxTest::GfxTest() : GraphicsApp(1024,768, "GfxTest"), playing_(true) {
+}
+    
+    
+GfxTest::~GfxTest() {
+}
+
+    
+void GfxTest::InitNanoGUI() {
     // Setup the GUI window
     nanogui::Window *window = new nanogui::Window(screen(), "Controls");
     window->setPosition(Eigen::Vector2i(10, 10));
@@ -17,9 +25,6 @@ GfxTest::GfxTest() : GraphicsApp(1024,768, "GfxTest"), playing_(true) {
     screen()->performLayout();
 }
 
-
-GfxTest::~GfxTest() {
-}
 
 
 void GfxTest::OnPauseBtnPressed() {
