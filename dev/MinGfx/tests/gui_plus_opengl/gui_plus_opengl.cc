@@ -4,6 +4,7 @@
  See corresponding header file for details.
  */
 
+#define _USE_MATH_DEFINES
 #include "gui_plus_opengl.h"
 
 #include "default_shader.h"
@@ -41,7 +42,7 @@ public:
         title_bgcol_ = Color(85.0/255.0, 83.0/255.0, 83.0/255.0);
         title_highcol_ = Color(19.0/255.0, 0.0/255.0, 239.0/255.0);
         for (int i=0; i<title_.length(); i++) {
-            title_[i] = std::toupper(title_[i]);
+            //title_[i] = std::toupper(title_[i]);
         }
         
         item_format_.color = Color(0,0,0);
