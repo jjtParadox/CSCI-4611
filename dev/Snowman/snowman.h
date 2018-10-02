@@ -4,6 +4,7 @@
 #define SNOWMAN_H_
 
 #include <mingfx.h>
+using namespace mingfx;
 
 #include <string>
 #include <vector>
