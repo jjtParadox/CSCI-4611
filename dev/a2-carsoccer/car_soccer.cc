@@ -99,8 +99,6 @@ void CarSoccer::DrawUsingOpenGL() {
     quickShapes_.DrawSphere(modelMatrix_ * Mshadow, viewMatrix_, projMatrix_, shadowcol);
     
     
-    // You should add drawing the goals and the boundary of the playing area
-    // using quickShapes_.DrawLines()
     std::vector<Point3> rBoundary;
     rBoundary.push_back(Point3( 40.0,  0.0, -50.0));
     rBoundary.push_back(Point3( 40.0,  0.0,  50.0));
@@ -125,4 +123,18 @@ void CarSoccer::DrawUsingOpenGL() {
     quickShapes_.DrawLines(modelMatrix_, viewMatrix_, projMatrix_, Color(1,1,1), lBoundary, QuickShapes::LinesType::LINE_LOOP, 0.1);
     quickShapes_.DrawLines(modelMatrix_, viewMatrix_, projMatrix_, Color(1,1,1), bBoundary, QuickShapes::LinesType::LINE_LOOP, 0.1);
     quickShapes_.DrawLines(modelMatrix_, viewMatrix_, projMatrix_, Color(1,1,1), fBoundary, QuickShapes::LinesType::LINE_LOOP, 0.1);
+
+    for (int side = 0; side < 2; side++) {
+        std::vector<Point3> goal;
+        for (int i = -10; i <= 10; i++) {
+            goal.push_back(Point3((float) i, 0.0, -50.0 + 100 * side));
+            goal.push_back(Point3((float) i, 10.0, -50.0 + 100 * side));
+        }
+        for (int i = 0; i <= 10; i++) {
+            goal.push_back(Point3(-10.0, (float) i, -50.0 + 100 * side));
+            goal.push_back(Point3( 10.0, (float) i, -50.0 + 100 * side));
+        }
+        quickShapes_.DrawLines(modelMatrix_, viewMatrix_, projMatrix_, Color(0 + 1 * side, 1 - 1 * side, 1 - 1 * side), goal,
+                               QuickShapes::LinesType::LINES, 0.1);
+    }
 }
