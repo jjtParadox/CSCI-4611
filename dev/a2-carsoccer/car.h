@@ -13,7 +13,7 @@ public:
     /// The constructor sets the static properties of the car, like its size,
     /// and then calls Reset() to reset the position, velocity, and any other
     /// dynamic variables that change during game play.
-    Car() : size_(3,2,4), collision_radius_(2.5), speed_(30) {
+    Car() : size_(3,2,4), collision_radius_(2.5) {
         Reset();
     }
 
@@ -25,6 +25,7 @@ public:
     void Reset() {
         position_ = Point3(0, size_[1]/2, 45);
         heading_ = 0;
+        speed_ = 0;
     }
     
     float collision_radius() { return collision_radius_; }
@@ -32,6 +33,7 @@ public:
     Vector3 size() { return size_; }
 
     float speed() { return speed_; }
+    void set_speed(const float s) { speed_ = s; }
     
     Point3 position() { return position_; }
     void set_position(const Point3 &p) { position_ = p; }

@@ -40,18 +40,20 @@ void CarSoccer::OnSpecialKeyDown(int key, int scancode, int modifiers) {
 
 
 void CarSoccer::UpdateSimulation(double timeStep) {
+    timeStep = fmin(timeStep, 0.1);
     bool goalScored = false;
     // Here's where you shound do your "simulation", updating the positions of the
     // car and ball as needed and checking for collisions.  Filling this routine
     // in is the main part of the assignment.
-    float speed = car_.speed() * (float) timeStep * joystick_direction()[1];
-    if (IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
-        speed *= 2.0f;
-    }
+    float speed = car_.speed() - (5 * car_.speed() * (float) timeStep) + joystick_direction()[1] * (float) timeStep;
+//    if (IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+//        speed *= 2.0f;
+//    }
     float spdX = speed * (float) sin(car_.heading());
     float spdZ = speed * (float) cos(car_.heading());
     car_.set_position(car_.position() - Vector3(spdX, 0, spdZ));
-    car_.set_heading(car_.heading() - 4 * (float) timeStep * joystick_direction()[0] * joystick_direction()[1]);
+    car_.set_heading(car_.heading() - 4 * (float) timeStep * joystick_direction()[0] * speed * 10);
+    car_.set_speed(speed);
 
     ball_.set_position(ball_.position() + ball_.velocity() * timeStep);
     ball_.set_velocity(ball_.velocity() - Vector3(0, 80, 0) * timeStep);
@@ -79,7 +81,7 @@ void CarSoccer::UpdateSimulation(double timeStep) {
     Vector3 dst = Vector3((float *) pos.value_ptr()) - Vector3((float *) car_.position().value_ptr());
     if (dst.Length() < ball_.radius() + car_.collision_radius()) {
         pos = pos + dst.ToUnit() * -(dst.Length() - ball_.radius() - car_.collision_radius());
-        vel = vel - 2 * vel.Dot(dst.ToUnit()) * dst.ToUnit();
+        vel = vel - 2 * vel.Dot(dst.ToUnit()) * dst.ToUnit() * 0.7;
         vel = vel + (Vector3(spdX, 0, spdZ) * -400);
     }
 
