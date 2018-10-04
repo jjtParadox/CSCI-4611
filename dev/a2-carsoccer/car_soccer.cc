@@ -33,16 +33,89 @@ Vector2 CarSoccer::joystick_direction() {
 
 void CarSoccer::OnSpecialKeyDown(int key, int scancode, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
-        // Here's where you could call some form of launch_ball();
+        ball_.Reset();
+        car_.Reset();
     }
 }
 
 
 void CarSoccer::UpdateSimulation(double timeStep) {
+    bool goalScored = false;
     // Here's where you shound do your "simulation", updating the positions of the
     // car and ball as needed and checking for collisions.  Filling this routine
     // in is the main part of the assignment.
-    
+    float speed = car_.speed() * (float) timeStep * joystick_direction()[1];
+    if (IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+        speed *= 2.0f;
+    }
+    float spdX = speed * (float) sin(car_.heading());
+    float spdZ = speed * (float) cos(car_.heading());
+    car_.set_position(car_.position() - Vector3(spdX, 0, spdZ));
+    car_.set_heading(car_.heading() - 4 * (float) timeStep * joystick_direction()[0] * joystick_direction()[1]);
+
+    ball_.set_position(ball_.position() + ball_.velocity() * timeStep);
+    ball_.set_velocity(ball_.velocity() - Vector3(0, 80, 0) * timeStep);
+
+    Point3 pos = car_.position();
+    if (fabs(pos.x()) + car_.collision_radius() > 40) {
+       if (pos.x() > 0) {
+           pos[0] = 40 - car_.collision_radius();
+       } else {
+           pos[0] = -40 + car_.collision_radius();
+       }
+    }
+    if (fabs(pos.z()) + car_.collision_radius() > 50) {
+        if (pos.z() > 0) {
+            pos[2] = 50 - car_.collision_radius();
+        } else {
+            pos[2] = -50 + car_.collision_radius();
+        }
+    }
+    car_.set_position(pos);
+
+    pos = ball_.position();
+    Vector3 vel = ball_.velocity();
+
+    Vector3 dst = Vector3((float *) pos.value_ptr()) - Vector3((float *) car_.position().value_ptr());
+    if (dst.Length() < ball_.radius() + car_.collision_radius()) {
+        pos = pos + dst.ToUnit() * -(dst.Length() - ball_.radius() - car_.collision_radius());
+        vel = vel - 2 * vel.Dot(dst.ToUnit()) * dst.ToUnit();
+        vel = vel + (Vector3(spdX, 0, spdZ) * -400);
+    }
+
+    if (fabs(pos.x()) + ball_.radius() > 40) {
+        vel[0] = -vel[0] * 0.8;
+        if (pos.x() > 0) {
+            pos[0] = 40 - ball_.radius();
+        } else {
+            pos[0] = -40 + ball_.radius();
+        }
+    }
+    if (pos.y() - ball_.radius() < 0) {
+        pos[1] = 0 + ball_.radius();
+        vel[1] = -vel[1] * 0.6;
+    }
+    if (pos.y() - ball_.radius() > 35) {
+        pos[1] = 35 - ball_.radius();
+        vel[1] = -vel[1] * 0.8;
+    }
+    if (fabs(pos.z()) + ball_.radius() > 50) {
+        if (fabs(pos.x()) < 10 && pos.y() < 10)
+            goalScored = true;
+        vel[2] = -vel[2] * 0.8;
+        if (pos.z() > 0) {
+            pos[2] = 50 - ball_.radius();
+        } else {
+            pos[2] = -50 + ball_.radius();
+        }
+    }
+    ball_.set_position(pos);
+    ball_.set_velocity(vel);
+
+    if (goalScored) {
+        ball_.Reset();
+        car_.Reset();
+    }
 }
 
 
@@ -75,6 +148,7 @@ void CarSoccer::DrawUsingOpenGL() {
     Color carcol(0.8, 0.2, 0.2);
     Matrix4 Mcar =
         Matrix4::Translation(car_.position() - Point3(0,0,0)) *
+        Matrix4::RotationY(car_.heading()) *
         Matrix4::Scale(car_.size()) *
         Matrix4::Scale(Vector3(0.5,0.5,0.5));
     quickShapes_.DrawCube(modelMatrix_ * Mcar, viewMatrix_, projMatrix_, carcol);

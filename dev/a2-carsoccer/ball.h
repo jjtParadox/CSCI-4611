@@ -22,12 +22,16 @@ public:
     
     void Reset() {
         position_ = Point3(0, radius_, 0);
+        velocity_ = Vector3(rand() % 10 - 5, rand() % 60, rand() % 10 + 10);
     }
 
     float radius() { return radius_; }
     
     Point3 position() { return position_; }
     void set_position(const Point3 &p) { position_ = p; }
+
+    Vector3 velocity() { return velocity_; }
+    void set_velocity(const Vector3 &v) { velocity_ = v; }
     
     
 private:
@@ -35,6 +39,7 @@ private:
     
     Point3 position_;
     float radius_;
+    Vector3 velocity_;
 };
 
 #endif
