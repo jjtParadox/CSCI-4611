@@ -22,7 +22,7 @@ public:
     
     void Reset() {
         position_ = Point3(0, radius_, 0);
-        velocity_ = Vector3(rand() % 10 - 5, rand() % 60, rand() % 10 + 10);
+        velocity_ = Vector3(rand() % 20 - 10, rand() % 60, rand() % 20 + 10);
     }
 
     float radius() { return radius_; }
