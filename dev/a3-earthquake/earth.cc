@@ -10,6 +10,10 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+std::vector<Point3> plane_vertices;
+std::vector<Vector3> plane_normals;
+std::vector<Point3> sphere_vertices;
+std::vector<Vector3> sphere_normals;
 
 Earth::Earth() {
 }
@@ -25,18 +29,21 @@ void Earth::Init(const std::vector<std::string> &search_path) {
     earth_tex_.InitFromFile(Platform::FindFile("earth-2k.png", search_path));
 
     // init geometry
-    const int nslices = 10;
-    const int nstacks = 10;
+    const int nslices = 50;
+    const int nstacks = 50;
 
     std::vector<unsigned int> indices;
-    std::vector<Point3> vertices;
-    std::vector<Vector3> normals;
     std::vector<Point2> tex_coords;
 
     for (int i = 0; i <= nslices; i++) {
         for (int j = 0; j <= nstacks; j++) {
-            vertices.push_back(Point3((float)i/nslices * 6 - 3, (float)j/nstacks * 3 - 1.5f, 0));
-            normals.push_back(Vector3(0,0,-1).ToUnit());
+            plane_vertices.push_back(Point3((float)((float)i/nslices * 2*M_PI - M_PI), (float)((float)j/nstacks * M_PI - M_PI_2), 0));
+            plane_normals.push_back(Vector3(0,0,-1).ToUnit());
+
+            Point3 sphere_pos = LatLongToSphere((float)j/nstacks * 180 - 90, (float)i/nslices * 360 - 180);
+            sphere_vertices.push_back(sphere_pos);
+            sphere_normals.push_back(sphere_pos - Point3(0,0,0));
+
             tex_coords.push_back(Point2((float)i/nslices, 1.0f-(float)j/nstacks));
         }
     }
@@ -53,13 +60,49 @@ void Earth::Init(const std::vector<std::string> &search_path) {
         }
     }
 
-    earth_mesh_.SetVertices(vertices);
-    earth_mesh_.SetNormals(normals);
+    earth_mesh_.SetVertices(plane_vertices);
+    earth_mesh_.SetNormals(plane_normals);
     earth_mesh_.SetIndices(indices);
     earth_mesh_.SetTexCoords(0, tex_coords);
     earth_mesh_.UpdateGPUMemory();
 }
 
+
+void Earth::LerpTo(const float target) {
+    if (target <= 0.0) {
+        earth_mesh_.SetVertices(plane_vertices);
+        earth_mesh_.SetNormals(plane_normals);
+    } else if (target >= 1.0) {
+        earth_mesh_.SetVertices(sphere_vertices);
+        earth_mesh_.SetNormals(sphere_normals);
+    } else {
+        std::vector<Point3> vertices;
+        std::vector<Vector3> normals;
+
+        for (int i = 0; i < plane_vertices.size(); i++) {
+            Point3 p = plane_vertices[i];
+            Vector3 n = plane_normals[i];
+
+            Point3 s_p = sphere_vertices[i];
+            Vector3 s_n = sphere_normals[i];
+
+            float p_x = GfxMath::Lerp(p.x(), s_p.x(), target);
+            float p_y = GfxMath::Lerp(p.y(), s_p.y(), target);
+            float p_z = GfxMath::Lerp(p.z(), s_p.z(), target);
+
+            float n_x = GfxMath::Lerp(n.x(), s_n.x(), target);
+            float n_y = GfxMath::Lerp(n.y(), s_n.y(), target);
+            float n_z = GfxMath::Lerp(n.z(), s_n.z(), target);
+
+            vertices.push_back(Point3(p_x, p_y, p_z));
+            normals.push_back(Vector3(n_x, n_y, n_z));
+        }
+
+        earth_mesh_.SetVertices(vertices);
+        earth_mesh_.SetNormals(normals);
+    }
+    earth_mesh_.UpdateGPUMemory();
+}
 
 
 void Earth::Draw(const Matrix4 &model_matrix, const Matrix4 &view_matrix, const Matrix4 &proj_matrix) {
@@ -89,17 +132,17 @@ void Earth::Draw(const Matrix4 &model_matrix, const Matrix4 &view_matrix, const 
 
 
 Point3 Earth::LatLongToSphere(double latitude, double longitude) const {
-    float latRads = (float) latitude / 180.0f * (float) M_PI;
-    float lonRads = (float) longitude / 180.0f * (float) M_PI;
-    float x = 2.0f * sinf(lonRads);
-    float y = 2.0f * sinf(latRads);
-    float z = 2.0f * cosf(lonRads);
+    float latRads = GfxMath::ToRadians((float)latitude);
+    float lonRads = GfxMath::ToRadians((float)longitude);
+    float x = cosf(latRads) * sinf(lonRads) * (float) M_PI_2;
+    float y = sinf(latRads) * (float) M_PI_2;
+    float z = cosf(latRads) * cosf(lonRads) * (float) M_PI_2;
     return Point3(x,y,z);
 }
 
 Point3 Earth::LatLongToPlane(double latitude, double longitude) const {
-    float x = (float) longitude / 180 * 3;
-    float y = (float) latitude / 90 * 1.5f;
+    float x = (float) longitude / 180 * (float) M_PI;
+    float y = (float) latitude / 90 * (float) M_PI_2;
     return Point3(x,y,0);
 }
 

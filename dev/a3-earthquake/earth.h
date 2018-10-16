@@ -20,6 +20,8 @@ public:
     /// version of the earth.  The searchPath is for finding the texture file.
     void Init(const std::vector<std::string> &search_path);
 
+    void LerpTo(const float target);
+
     /// Draw the Earth to screen using the current version of the mesh set with
     /// the last call to UpdateMesh.
     void Draw(const Matrix4 &model_matrix, const Matrix4 &view_matrix, const Matrix4 &proj_matrix);
