@@ -4,11 +4,14 @@
 #include "quake_app.h"
 #include "config.h"
 
+#include <deque>
 #include <iostream>
 #include <sstream>
 
 // Number of seconds in 1 year (approx.)
 const int PLAYBACK_WINDOW = 12 * 28 * 24 * 60 * 60;
+
+std::deque<int> earthquakes;
 
 using namespace std;
 
@@ -109,6 +112,11 @@ void QuakeApp::UpdateSimulation(double dt)  {
     
     // TODO: Any animation, morphing, rotation of the earth, or other things that should
     // be updated once each frame would go here.
+    int e = quake_db_.FindMostRecentQuake(current_time_);
+    if (earthquakes.empty() || earthquakes.back() != e)
+        earthquakes.push_back(e);
+    while (earthquakes.size() > 40)
+        earthquakes.pop_front();
 }
 
 
@@ -143,6 +151,14 @@ void QuakeApp::DrawUsingOpenGL() {
     // TODO: You'll also need to draw the earthquakes.  It's up to you exactly
     // how you wish to do that.
 
+    for (int &i : earthquakes) {
+        Earthquake quake = quake_db_.earthquake(i);
+        Point3 e_pos = earth_.LatLongToPlane(quake.latitude(), quake.longitude());
+        Matrix4 mEarthquake =
+                Matrix4::Translation(e_pos - Point3(0, 0, 0)) *
+                Matrix4::Scale(Vector3(0.015, 0.015, 0.015));
+        quick_shapes_.DrawSphere(mEarthquake, view_matrix_, proj_matrix_, Color(1, 0, 0));
+    }
 }
 
 
