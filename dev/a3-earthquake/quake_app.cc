@@ -11,7 +11,11 @@
 // Number of seconds in 1 year (approx.)
 const int PLAYBACK_WINDOW = 12 * 28 * 24 * 60 * 60;
 
-std::deque<int> earthquakes;
+std::vector<int> earthquakes;
+
+float lerp_target = 0.0;
+float lerp = 0.0;
+float rotation = 0.0;
 
 using namespace std;
 
@@ -80,7 +84,7 @@ void QuakeApp::OnLeftMouseDrag(const Point2 &pos, const Vector2 &delta) {
 
 
 void QuakeApp::OnGlobeBtnPressed() {
-    // TODO: This is where you can switch between flat earth mode and globe mode
+    lerp_target = 1.0f - lerp_target;
 }
 
 void QuakeApp::OnDebugBtnPressed() {
@@ -112,11 +116,22 @@ void QuakeApp::UpdateSimulation(double dt)  {
     
     // TODO: Any animation, morphing, rotation of the earth, or other things that should
     // be updated once each frame would go here.
+    earthquakes.clear();
     int e = quake_db_.FindMostRecentQuake(current_time_);
-    if (earthquakes.empty() || earthquakes.back() != e)
+    while (e >= quake_db_.min_index() && d.SecondsUntil(quake_db_.earthquake(e).date()) <= 60 * 60 * 24 * 365) {
         earthquakes.push_back(e);
-    while (earthquakes.size() > 40)
-        earthquakes.pop_front();
+        e--;
+    }
+
+    if (lerp_target > lerp) {
+        lerp += dt/2;
+    }
+    if (lerp_target < lerp) {
+        lerp -= dt/2;
+    }
+    earth_.LerpTo(lerp);
+
+    rotation = fmodf((rotation + (float)dt/4) * sqrt(sqrt((float)fmax(0, lerp))), 2*(float)M_PI);
 }
 
 
@@ -140,7 +155,7 @@ void QuakeApp::DrawUsingOpenGL() {
     // You can leave this as the identity matrix and we will have a fine view of
     // the earth.  If you want to add any rotation or other animation of the
     // earth, the model_matrix is where you would apply that.
-    Matrix4 model_matrix;
+    Matrix4 model_matrix = Matrix4::RotationY(rotation);
     
     // Draw the earth
     earth_.Draw(model_matrix, view_matrix_, proj_matrix_);
@@ -148,16 +163,24 @@ void QuakeApp::DrawUsingOpenGL() {
         earth_.DrawDebugInfo(model_matrix, view_matrix_, proj_matrix_);
     }
 
-    // TODO: You'll also need to draw the earthquakes.  It's up to you exactly
-    // how you wish to do that.
+    Date d(current_time_);
 
     for (int &i : earthquakes) {
         Earthquake quake = quake_db_.earthquake(i);
-        Point3 e_pos = earth_.LatLongToPlane(quake.latitude(), quake.longitude());
-        Matrix4 mEarthquake =
+
+        Point3 e_p_pos = earth_.LatLongToPlane(quake.latitude(), quake.longitude());
+        Point3 e_s_pos = earth_.LatLongToSphere(quake.latitude(), quake.longitude());
+        Point3 e_pos = e_p_pos.Lerp(e_s_pos, lerp);
+
+        float size = (float) quake.magnitude() - quake_db_.min_magnitude();
+        size = size * size / quake_db_.max_magnitude();
+        float t = (float) d.SecondsUntil(quake.date()) / (60 * 60 * 24 * 365);
+        float sphere_size = 0.01f + size * 0.05f * fabs(t);
+
+        Matrix4 mEarthquake = model_matrix *
                 Matrix4::Translation(e_pos - Point3(0, 0, 0)) *
-                Matrix4::Scale(Vector3(0.015, 0.015, 0.015));
-        quick_shapes_.DrawSphere(mEarthquake, view_matrix_, proj_matrix_, Color(1, 0, 0));
+                Matrix4::Scale(Vector3(sphere_size, sphere_size, sphere_size));
+        quick_shapes_.DrawSphere(mEarthquake, view_matrix_, proj_matrix_, Color(1, 1.0f - size, 0));
     }
 }
 
