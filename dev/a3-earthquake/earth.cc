@@ -28,30 +28,35 @@ void Earth::Init(const std::vector<std::string> &search_path) {
     const int nslices = 10;
     const int nstacks = 10;
 
-    // TODO: This is where you need to set the vertices and indiceds for earth_mesh_.
-
-    // As a demo, we'll add a square with 2 triangles.
     std::vector<unsigned int> indices;
     std::vector<Point3> vertices;
+    std::vector<Vector3> normals;
+    std::vector<Point2> tex_coords;
 
-    // four vertices
-    vertices.push_back(Point3(0,0,0));
-    vertices.push_back(Point3(1,0,0));
-    vertices.push_back(Point3(1,1,0));
-    vertices.push_back(Point3(0,1,0));
+    for (int i = 0; i <= nslices; i++) {
+        for (int j = 0; j <= nstacks; j++) {
+            vertices.push_back(Point3((float)i/nslices * 6 - 3, (float)j/nstacks * 3 - 1.5f, 0));
+            normals.push_back(Vector3(0,0,-1).ToUnit());
+            tex_coords.push_back(Point2((float)i/nslices, 1.0f-(float)j/nstacks));
+        }
+    }
 
-    // indices into the arrays above for the first triangle
-    indices.push_back(0);
-    indices.push_back(1);
-    indices.push_back(2);
-    
-    // indices for the second triangle, note some are reused
-    indices.push_back(0);
-    indices.push_back(2);
-    indices.push_back(3);
-    
+    for (int i = 0; i < nslices; i++) {
+        for (int j = 0; j < nstacks; j++) {
+            indices.push_back((unsigned int)(i * (nstacks+1) + j));
+            indices.push_back((unsigned int)((i+1) * (nstacks+1) + j));
+            indices.push_back((unsigned int)((i+1) * (nstacks+1) + (j+1)));
+
+            indices.push_back((unsigned int)(i * (nstacks+1) + j));
+            indices.push_back((unsigned int)((i+1) * (nstacks+1) + (j+1)));
+            indices.push_back((unsigned int)(i * (nstacks+1) + (j+1)));
+        }
+    }
+
     earth_mesh_.SetVertices(vertices);
+    earth_mesh_.SetNormals(normals);
     earth_mesh_.SetIndices(indices);
+    earth_mesh_.SetTexCoords(0, tex_coords);
     earth_mesh_.UpdateGPUMemory();
 }
 
@@ -84,15 +89,18 @@ void Earth::Draw(const Matrix4 &model_matrix, const Matrix4 &view_matrix, const 
 
 
 Point3 Earth::LatLongToSphere(double latitude, double longitude) const {
-    // TODO: We recommend filling in this function to put all your
-    // lat,long --> sphere calculations in one place.
-    return Point3(0,0,0);
+    float latRads = (float) latitude / 180.0f * (float) M_PI;
+    float lonRads = (float) longitude / 180.0f * (float) M_PI;
+    float x = 2.0f * sinf(lonRads);
+    float y = 2.0f * sinf(latRads);
+    float z = 2.0f * cosf(lonRads);
+    return Point3(x,y,z);
 }
 
 Point3 Earth::LatLongToPlane(double latitude, double longitude) const {
-    // TODO: We recommend filling in this function to put all your
-    // lat,long --> plane calculations in one place.
-    return Point3(0,0,0);
+    float x = (float) longitude / 180 * 3;
+    float y = (float) latitude / 90 * 1.5f;
+    return Point3(x,y,0);
 }
 
 
