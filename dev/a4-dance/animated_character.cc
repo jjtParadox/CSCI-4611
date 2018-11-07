@@ -168,22 +168,6 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
 {
     // Step 1:  Draw this bone
     
-    /** TODO: You will need to define a current transformation matrix for this bone that takes into account not just the parent_transform but also the local rotation of the bone due to the current pose.
-     
-        Think of the vertices that make up the geometry of each bone as being defined in "bone space", where the joint that the bone rotates around is located at the origin and the bone extends in the direction and length specified by the skeleton. (See Skeleton::BoneDirectionAndLength()).
-     
-        To determine which matrices need to be composed to create the current transformation matrix and the order to multiply them together, think about what needs to happen to each vertex of a cylinder defined in "bone space" in order to get the vertex to the correct position in 3D space.
-     
-        First, the vertex must be transformed into the bone's "rotation axis space" because the rotation axes are not guaranteed to line up perfectly with the bone's X,Y,Z axes.  The bone's rotation axes are a property of the skeleton -- they are set for each skeleton and do not change for each pose.  You can access a matrix that transforms from "bone space" to "rotation axis space" from the skeleton_ member variable.
-     
-        Second, now that the vertices are in the bone's "rotation axis space", the rotation from the character's current pose can be applied.  The current pose is stored in the pose_ member variable.
-
-        Third, with the rotations applied relative to the appropriate rotation axes, the vertices must now be transformed back into regular "bone space".  At this point, the bone should be properly rotated based upon the current pose, but the vertices are still defined in "bone space" so they are close to the origin.
-     
-        Finally, the vertices need to be tranformed to the bone's parent space.
-     
-        To start, we give you a current transformation matrix (ctm) that only takes this last step into account.
-    */
     Matrix4 ctm = parent_transform;
 
     
@@ -194,7 +178,7 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
 
     Matrix4 pose_rotation = pose_.JointRotation(bone_name);
 
-    quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space, view_matrix, proj_matrix, Color(0.0, 0.0, 1.0), Point3(0.0, 0.0, 0.0), Point3(0.0, 0.0, 0.0) + bone, 0.005);
+    quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space, view_matrix, proj_matrix, Color(0.0, 0.0, 0.0), Point3(0.0, 0.0, 0.0), Point3(0.0, 0.0, 0.0) + bone, 0.013);
 
     
     // TODO: Eventually, you'll want to draw something different depending on which part
@@ -208,16 +192,41 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
     if (bone_name == "lfoot" || bone_name == "rfoot") {
     }
     if (bone_name == "ltoes" || bone_name == "rtoes") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.05, 0.05, 0.05));
+        Matrix4 sphere_translate = Matrix4::Translation(bone / 2);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
     }
     if (bone_name == "lowerback") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.07, 0.23, 0.07));
+        Matrix4 sphere_translate = Matrix4::Translation(-bone / 2.0);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
     }
     if (bone_name == "upperback") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.05, 0.05, 0.05));
+        Matrix4 sphere_translate = Matrix4::Translation(bone / 2);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
     }
     if (bone_name == "thorax") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.07, 0.13, 0.07));
+        Matrix4 sphere_translate = Matrix4::Translation(bone / 2);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
     }
     if (bone_name == "lowerneck" || bone_name == "upperneck") {
+        quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space, view_matrix, proj_matrix, Color(0.7, 0.0, 0.0), Point3(0.0, 0.0, 0.0), Point3(0.0, 0.0, 0.0) + bone, 0.017);
     }
     if (bone_name == "head") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.07, 0.13, 0.07));
+        Matrix4 sphere_translate = Matrix4::Translation(bone / 2);
+        Matrix4 sphere_rotate = Matrix4::RotationX(-M_PI_4);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_rotate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
+
+        Matrix4 antenna_matrix = Matrix4::Translation(Vector3(0.0, 0.11, 0.0));
+        Matrix4 rotate_matrix = Matrix4::RotationZ(0.23);
+        quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space * rotate_matrix * antenna_matrix, view_matrix, proj_matrix, Color(0, 0, 0), Point3(0, 0, 0), Point3(0, 0.25, 0.1), 0.007);
+        quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space * rotate_matrix * antenna_matrix, view_matrix, proj_matrix, Color(0, 0, 0), Point3(0, 0.25, 0.1), Point3(0, 0.25, 0.18), 0.007);
+        rotate_matrix = Matrix4::RotationZ(-0.23);
+        quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space * rotate_matrix * antenna_matrix, view_matrix, proj_matrix, Color(0, 0, 0), Point3(0, 0, 0), Point3(0, 0.25, 0.1), 0.007);
+        quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space * rotate_matrix * antenna_matrix, view_matrix, proj_matrix, Color(0, 0, 0), Point3(0, 0.25, 0.1), Point3(0, 0.25, 0.18), 0.007);
     }
     if (bone_name == "lclavicle" || bone_name == "rclavicle") {
     }
@@ -225,7 +234,10 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
     }
     if (bone_name == "lwrist" || bone_name == "rwrist") {
     }
-    if (bone_name == "lhand" || bone_name == "rhand" || bone_name == "lthumb" || bone_name == "rthumb" || bone_name == "rfingers" || bone_name == "lfingers") {
+    if (/*bone_name == "lhand" || bone_name == "rhand" || bone_name == "lthumb" || bone_name == "rthumb" ||*/ bone_name == "rfingers" || bone_name == "lfingers") {
+        Matrix4 sphere_scale = Matrix4::Scale(Vector3(0.07, 0.07, 0.07));
+        Matrix4 sphere_translate = Matrix4::Translation(bone / 2);
+        quick_shapes_.DrawSphere(ctm * bone_space * pose_rotation * rotation_space * sphere_translate * sphere_scale, view_matrix, proj_matrix, Color(1.0, 0.0, 0.0));
     }
     
     
