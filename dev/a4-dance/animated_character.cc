@@ -187,12 +187,14 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
     Matrix4 ctm = parent_transform;
 
     
-    // Here is a good way to check your work -- draw the coordinate axes for each
-    // bone.  To start, this will just draw the axes for the root node of the
-    // character, but once you add the recursive call to draw the children, this
-    // will draw the axes for each bone.
-    Matrix4 S = Matrix4::Scale(Vector3(0.15,0.15,0.15));
-    quick_shapes_.DrawAxes(ctm * S, view_matrix, proj_matrix);
+    Vector3 bone = skeleton_.BoneDirectionAndLength(bone_name);
+
+    Matrix4 rotation_space = skeleton_.BoneSpaceToRotAxesSpace(bone_name);
+    Matrix4 bone_space = skeleton_.RotAxesSpaceToBoneSpace(bone_name);
+
+    Matrix4 pose_rotation = pose_.JointRotation(bone_name);
+
+    quick_shapes_.DrawLineSegment(ctm * bone_space * pose_rotation * rotation_space, view_matrix, proj_matrix, Color(0.0, 0.0, 1.0), Point3(0.0, 0.0, 0.0), Point3(0.0, 0.0, 0.0) + bone, 0.005);
 
     
     // TODO: Eventually, you'll want to draw something different depending on which part
@@ -228,17 +230,19 @@ void AnimatedCharacter::DrawBoneRecursive(const std::string &bone_name, const Ma
     
     
     // Step 2: Draw the bone's children
-    /**
      
-    // TODO: Determining the proper child_root_transform is the key here.  It depends on the
-    // current transformation matrix, but you also need to take into account the
-    // direction and length of the bone in order to reach the root of the children.
-    Matrix4 child_root_transform = ????;
+    Matrix4 child_root_transform = ctm * bone_space * pose_rotation * rotation_space * skeleton_.BoneSpaceToChildrenSpace(bone_name);
      
     for (int i=0; i<skeleton_.num_children(bone_name); i++) {
         DrawBoneRecursive(skeleton_.child_bone(bone_name, i), child_root_transform, view_matrix, proj_matrix);
     }
-    **/
+
+    // Second set of arms (these *are* ants)
+    if (bone_name == "lowerback") {
+        Matrix4 scale = Matrix4::Scale(Vector3(0.7, 0.7, 0.7));
+        DrawBoneRecursive("lclavicle", child_root_transform * scale, view_matrix, proj_matrix);
+        DrawBoneRecursive("rclavicle", child_root_transform * scale, view_matrix, proj_matrix);
+    }
 }
 
 
