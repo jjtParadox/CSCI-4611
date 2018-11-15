@@ -125,8 +125,8 @@ void ArtRenderApp::InitOpenGL() {
     outline_shaderprog_.AddFragmentShaderFromFile(Platform::FindFile("outline.frag", search_path_));
     outline_shaderprog_.LinkProgram();
     
-    diffuse_ramp_.InitFromFile(Platform::FindFile("standardDiffuse.png", search_path_));
-    specular_ramp_.InitFromFile(Platform::FindFile("standardSpecular.png", search_path_));
+    diffuse_ramp_.InitFromFile(Platform::FindFile("toonDiffuse.png", search_path_));
+    specular_ramp_.InitFromFile(Platform::FindFile("toonSpecular.png", search_path_));
 }
 
 
