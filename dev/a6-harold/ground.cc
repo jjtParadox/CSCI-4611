@@ -165,17 +165,30 @@ void Ground::ReshapeGround(const Matrix4 &view_matrix, const Matrix4 &proj_matri
     // have a normal vector that points toward the camera and is parallel to the
     // ground plane.
 
-    
-    
-    
-    
+    Point3 first_point;
+    ScreenPtHitsGround(view_matrix, proj_matrix, stroke2d.front(), &first_point);
+    Point3 last_point;
+    ScreenPtHitsGround(view_matrix, proj_matrix, stroke2d.back(), &last_point);
+    Vector3 plane_vec = first_point - last_point;
+    Vector3 plane_normal = plane_vec.Cross(Vector3(0,1,0));
+    plane_normal.Normalize();
+    if (plane_normal.Dot(look) > 0)
+        plane_normal = plane_normal * -1;
+
     // 2. Project the 2D stroke into 3D so that it lies on the "projection plane"
     // defined in step 1.
-    
-    
-    
-    
-    
+
+    std::vector<Point3> silhouette_curve;
+    for (auto &pt : stroke2d) {
+        Point3 pt3d = GfxMath::ScreenToNearPlane(view_matrix, proj_matrix, pt);
+        Ray ray(eye, (pt3d - eye).ToUnit());
+
+        float t;
+        Point3 curve_point;
+        ray.IntersectPlane(first_point, plane_normal, &t, &curve_point);
+        silhouette_curve.push_back(curve_point);
+    }
+
     // 3. Loop through all of the vertices of the ground mesh, and adjust the
     // height of each based on the equations in section 4.5 of the paper, also
     // repeated in the assignment handout.  The equations rely upon a function
@@ -186,11 +199,15 @@ void Ground::ReshapeGround(const Matrix4 &view_matrix, const Matrix4 &proj_matri
         Point3 P = ground_mesh_.vertex(i); // original vertex
 
         // adjust P according to equations...
-        
-        
-        
-        
-        
+        Point3 nearest_point = P.ClosestPointOnPlane(first_point, plane_normal);
+        float d = (nearest_point - P).Length();
+        float h = hfunc(plane_normal, silhouette_curve, nearest_point);
+        if (h != 0) {
+            float w = (float) fmax(0, 1 - pow(d/5.0, 2));
+            float new_y = (1.0f - w) * P.y() + w * h;
+            P = Point3(P.x(), new_y, P.z());
+        }
+
         new_verts.push_back(P);
     }
     ground_mesh_.SetVertices(new_verts);
