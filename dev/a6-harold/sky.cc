@@ -45,17 +45,20 @@ bool Sky::ScreenPtHitsSky(const Matrix4 &view_matrix, const Matrix4 &proj_matrix
 void Sky::AddSkyStroke(const Matrix4 &view_matrix, const Matrix4 &proj_matrix,
                        const Mesh &stroke2d_mesh, const Color &stroke_color)
 {
-    // TODO: Create a new SkyStroke and add it to the strokes_ array.
+    Mesh m(stroke2d_mesh);
+    std::vector<Point3> sky_vertices;
+    for (int i = 0; i < m.num_vertices(); i++) {
+        Point3 v = m.vertex(i);
+        ScreenPtHitsSky(view_matrix, proj_matrix, Point2(v.x(), v.y()), &v);
+        sky_vertices.push_back(v);
+    }
+    m.SetVertices(sky_vertices);
+    m.UpdateGPUMemory();
 
-
-
-
-
-
-
-
-
-
+    SkyStroke s;
+    s.mesh = m;
+    s.color = stroke_color;
+    strokes_.push_back(s);
 }
 
 
