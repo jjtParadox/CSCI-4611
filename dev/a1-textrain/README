@@ -1,0 +1,12 @@
+Text Rain, by Jackson Turner
+
+For this project I focused on having the video feed and rain fall animations as smooth as possible. This required moving certain operations to certain threads. It is also why I decided to not mirror the camera view by default.
+
+The poem included is Rain by Robert Louis Stevenson. Words are created by stretching the whole poem across the width of the screen in the negative Y region and significantly randomizing the starting height of each letter.
+
+Controls:
+
+Spacebar - Show debug threshold view.
+Up/Down  - Adjust foreground/background threshold.
+B        - Enable smoothing of foreground/background threshold (will significantly impact smoothness).
+F        - Flip view (will significantly impact smoothness).
